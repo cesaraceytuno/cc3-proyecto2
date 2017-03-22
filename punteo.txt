@@ -1,0 +1,53 @@
+TAL (1 punto cada una)
+add
+addu
+addiu
+and
+andi
+div
+divu
+mult
+multu
+or
+sll
+sllv
+sra
+srl
+srlv
+sub
+subu
+lui
+slt
+sltu
+slti
+sltiu
+lw
+sw
+mfhi
+mflo
+
+Pseudoinstrucciones (11 puntos cada una)
+move
+neg
+mul
+div
+abs
+ror
+rol
+seq
+sne
+li
+la
+
+Saltos (6 puntos cada uno)
+j
+jr
+jal
+beq
+bne
+bgtz
+bgt
+blt
+
+Directivas (15 puntos)
+.asciiz

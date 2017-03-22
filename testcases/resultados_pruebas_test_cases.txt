@@ -1,0 +1,12 @@
+A continuacion se detallan los resultados esperados de los test cases:
+
+/----- Archivo -----\ 		/----- Imprime -----\
+aritmetico_logicas.s			101125515
+mult_div.s				2020
+compara.s				1100
+load_store.s				-1
+branch.s				1
+registros.s				0123456701234567890101230
+
+##### Pseudo #####
+aritmetico_logicas_pseudo.s		-151532
