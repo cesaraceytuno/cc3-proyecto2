@@ -1,24 +1,18 @@
-	.data
+.data
 msgBCodif: .asciiz "Codificando el siguinete programa:\n\n"
 
 ##### INICIO DEL PROGRAMA A CODIFICAR #####
-programa:	.asciiz "   .text
-main:
-   ori $a0 $0 10
-   ori $v0 $0 1
-   syscall
-   ori $v0 $0 10
-   syscall"
+programa:	.asciiz ".text\nmain:\n   add $a0 $a1 $a2\n   ori $v0 $0 1\n   syscall\n   ori $v0 $0 10\n   syscall"
 ##### FIN DEL PROGRAMA A CODIFICAR #####
 
 
 errMsg: .asciiz "Error!!!\n"
 msgFCodif: .asciiz "\n\nFinaliza la codificacion...\n\nEjecutando el programa codificado...\n"
-	
-	.align 2
-data:	.space 200	# Reservo 200 bytes para datos
-	.text
+
+.align 2
+data:	.space 200	# Reservo 200 bytes para datos	
 text:	.space 400	# Reservo espacio para almacenar el programa compilado (100 instrucciones)
+.text
 
 main:
    la $a0 msgBCodif	# Imprimo el programa que voy a ensamblar
@@ -57,6 +51,7 @@ exit:
 .data		# Palabras reservadas (instrucciones y directivas)
 str_data:	.asciiz ".data"
 str_text:	.asciiz ".text"
+str_add:	.asciiz "add"
 str_ori:	.asciiz "ori"
 str_syscall:	.asciiz "syscall"
 
@@ -83,17 +78,17 @@ ensamblador:
    move $s0 $a0	# s0 -> codigo fuente
    move $s1 $a1	# s1 -> area de .text
    move $s2 $a2	# s2 -> area de .data
-   move $s3 '#' # s3 -> caracter para comentarios
+   li   $s3 '#' 	# s3 -> caracter para comentarios
    li   $s4 ' '	# s4 -> caracter espacio
-   li   $s5 10  # s5 -> caracter "\n" -> EOL
-   li   $s6 9   # s6 -> tabulador
+   li   $s5 10  	# s5 -> caracter "\n" -> EOL
+   li   $s6 9   	# s6 -> tabulador
 
 # Inicio de la codificacion
 # Asumo que empieza en modo .text
 asm_text_loop:
    lb $t0 0($s0)
    addi $s0 $s0 1
-   beq $t0 $0 asm_exit			# Salir cuando se llegue al final del archivo
+   beq $t0 $0 asm_exit		# Salir cuando se llegue al final del archivo
    beq $t0 $s4 asm_text_loop	# Ignorar espacios en blanco
    beq $t0 $s5 asm_text_loop	# lineas en blanco
    beq $t0 $s6 asm_text_loop	# y tabuladores
@@ -135,11 +130,16 @@ asm_get_instruction:	# Basicamente, un gran switch que indica que instruccion es
    la $a1 str_data
    jal strcmp
    bne $v0 $0 asm_data_loop
-   
+
    move $a0 $s0			# verifico si es la directiva .text
    la $a1 str_text
    jal strcmp
    bne $v0 $0 asm_text_loop
+   
+   move $a0 $s0			# verifico si es la instruccion add
+   la $a1 str_add
+   jal strcmp
+   bne $v0 $0 asm_add
 
    move $a0 $s0			# verifico si es la instruccion ori
    la $a1 str_ori
@@ -190,11 +190,38 @@ asm_ori:
    jal asm_regs     # me devuelve el numero del registro
    sll $v0 $v0 5	# pongo rs en la posicion que debe ir (van cruzados)
    or  $s7 $s7 $v0	# almaceno el numero del registro en rt
- 
+
    sll $s7 $s7 16	# le hago shift de 16 para hacer espacio al imm
    addi $s0 $s0 1	# elimino el espacio
    jal ascii_to_int	# hago la conversion de ascii a int
    addu $s7 $s7 $v0 # concateno el imm con el resto que ya tenia
+   sw $s7 0($s1)	# almaceno la instruccion codificada
+   addi $s1 $s1 4
+   j asm_text_loop
+   
+###########################################
+######### asm_add #########################
+###########################################
+asm_add:
+   li $s7 0x00	# codigo de add 0x00
+
+   sll $s7 $s7 15	# shift porque son 5b de rs + 5b de rt + 5b de rd
+   addi $s0 $s0 1	# elimino el espacio
+   jal asm_regs     # me devuelve el numero del registro
+   add $s7 $s7 $v0	# almaceno el numero del registro en rd
+
+   addi $s0 $s0 1	# elimino el espacio
+   jal asm_regs     # me devuelve el numero del registro
+   sll $v0 $v0 10	# pongo rs en la posicion que debe ir
+   or  $s7 $s7 $v0	# almaceno el numero del registro en rs
+   
+   addi $s0 $s0 1	# elimino el espacio
+   jal asm_regs     # me devuelve el numero del registro
+   sll $v0 $v0 5	# pongo rt en la posicion que debe ir
+   or  $s7 $s7 $v0	# almaceno el numero del registro en rt
+
+   sll $s7 $s7 11	# le hago shift de 11 para hacer espacio al shamt (5b) y al funct (6b)
+   addiu $s7 $s7 32 	# concateno el function del add (32 int)
    sw $s7 0($s1)	# almaceno la instruccion codificada
    addi $s1 $s1 4
    j asm_text_loop
@@ -209,8 +236,9 @@ asm_regs:			# Pasa de $xN -> N, por ejemplo $s0 -> 16
    li $t6 'a'		# aX -> argumentos
    li $t5 'v'		# vX -> valores de retorno
    li $t4 '0'		# cero
-   					# Completar para los demas registros
-   
+   li $t3 't'		# tX -> temporales
+   li $t2 's'		# sX -> save
+
    lb $t0 0($s0)
    addi $s0 $s0 1
    bne $t0 $t7 asm_regs_error	# Si no empieza con $ no es valido
@@ -219,9 +247,13 @@ asm_regs:			# Pasa de $xN -> N, por ejemplo $s0 -> 16
    beq $t0 $t6 asm_regs_ax		# Verificar a que grupo pertence para sumarle un offset
    beq $t0 $t5 asm_regs_vx
    beq $t0 $t4 asm_regs_zero
+   beq $t0 $t3 asm_regs_tx
+   beq $t0 $t2 asm_regs_sx
+   beq $t0 'r' asm_regs_ra
+   
    j asm_regs_error				# No es ninguno, es un error
 
-asm_regs_zero:		# Caso trivial 
+asm_regs_zero:		# Caso trivial
    li $v0 0
    j asm_regs_exit
 
@@ -233,6 +265,33 @@ asm_regs_ax:
 asm_regs_vx:
    jal ascii_to_int
    addi $v0 $v0 2
+   j asm_regs_exit
+   
+asm_regs_tx:
+   jal ascii_to_int
+   beq $v0 8 asm_regs_tx2
+   beq $v0 9 asm_regs_tx2
+   addi $v0 $v0 8           #$t0...$t7 es 8...15
+   j asm_regs_exit
+asm_regs_tx2:
+   addi $v0 $v0 16	#$t8 es 24, $t9 es 25
+   j asm_regs_exit
+   
+asm_regs_sx:
+   lb $t0 0($s0)
+   beq $t0 'p' asm_regs_sp  # $sp
+   jal ascii_to_int
+   addi $v0 $v0 16           # $s0...$s7 es 16...23
+   j asm_regs_exit
+   
+asm_regs_sp:
+   li $v0 29
+   j asm_regs_exit
+ 
+asm_regs_ra:
+   lb $t0 0($s0)
+   bne $t0 $t6 asm_error	# si no es $ra goto asm_error
+   li $v0 31
    j asm_regs_exit
 
 asm_regs_exit:
@@ -249,8 +308,8 @@ asm_regs_error:
 ###########################################
 ascii_to_int:   # the infamous atoi, with no validations!
 li $t1 0		# init with zero
-li $t2 '0'	
-li $t3 '9'	
+li $t2 '0'
+li $t3 '9'
 li $t4 10
 li $v0 0
 
@@ -264,7 +323,7 @@ ascii_to_int_loop:
    mul  $v0 $v0 $t4			# multiply by 10
    add  $v0 $v0 $t0			# add real number
    j ascii_to_int_loop
-   
+
 ascii_to_int_exit:
    jr $ra
 
@@ -273,7 +332,7 @@ ascii_to_int_exit:
 ###########################################
 
 strcmp:			# Compara 2 cadenas de caracteres
-   li $t2 ' '		
+   li $t2 ' '
    li $t3 10
 
 strcmp_loop:
@@ -286,7 +345,7 @@ strcmp_loop:
    addi $a0 $a0 1
    addi $a1 $a1 1
    j strcmp_loop
-   
+
 strcmp_true:
    move $s0 $a0			# Esta funcion no es portable
    li $v0 1

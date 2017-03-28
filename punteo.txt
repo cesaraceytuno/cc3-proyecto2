@@ -1,6 +1,6 @@
 TAL (1 punto cada una)
-add
-addu
+add         DONE
+addu        
 addiu
 and
 andi
