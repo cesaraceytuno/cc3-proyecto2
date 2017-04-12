@@ -27,16 +27,16 @@ mfhi        DONE
 mflo        DONE
 
 Pseudoinstrucciones (11 puntos cada una)
-move
-neg
-mul
+move        DONE
+neg         DONE
+mul         DONE
 div
 abs
 ror
 rol
 seq
 sne
-li
+li          DONE
 la
 
 Saltos (6 puntos cada uno)
