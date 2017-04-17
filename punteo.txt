@@ -30,12 +30,12 @@ Pseudoinstrucciones (11 puntos cada una)
 move        DONE
 neg         DONE
 mul         DONE
-div
-abs
-ror
-rol
-seq
-sne
+div         DONE
+abs         DONE
+ror         DONE
+rol         DONE
+seq         DONE
+sne         DONE
 li          DONE
 la
 
